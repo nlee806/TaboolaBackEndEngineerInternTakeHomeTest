@@ -2,50 +2,164 @@
 
 @author: Nathan Lee
 @purpose: Taboola Backend Engineer Intern Take Home Test Question 1.
-
+Assumption: Input JSON String is in valid JSON Format.
 
 **/
 import java.util.*;
+import java.lang.Number;
 
 
 public class JSONParser{
 	
 	/**
+		parse()
 		Parses json String and returns Map<String,Object>
 	**/
 	public static Map<String,Object> parse(String json){
 		Map<String,Object> output = new LinkedHashMap<String,Object>();
 		
+		System.out.println("NEW JSON");
+		
+		//TODO-Delete this.
 		String testString = "";
+		
+		boolean containerBracket = false;
+		boolean openString = false; //In the middle of a String Yes/No
+		boolean addNewKeyValue = false;
+		boolean isOtherDataType = false;
+		int numNestedBrackets = 0;
+		String stringWriter = "";
+		String name = "";
+		Object value;
 		
 		//Go character by character through the JSON String
 		for(int a=0;a<json.length();a++){
-			char firstBracket = '{';
 			char currentChar = json.charAt(a);
+			
+			System.out.println("currentChar "+ currentChar);
+			
+			if(containerBracket == true){
+				if(currentChar == '"'){
+					openString = !openString; // Reverse the boolean, a quote begins or ends.
+					if(openString == true){
+						stringWriter = "";//empty the stringWriter.
+					}
+					else if(openString == false){//end of the word
+						//stringWriter = stringWriter+""; //Save the last string written.
+						
+						//TODO Delete this.
+						System.out.println(stringWriter);	
+					}	
+				}
+				if(openString == true && isOtherDataType == true && (currentChar==',' || currentChar=='}')){
+					openString = !openString;
+					isOtherDataType = !isOtherDataType;
+				}
+				if(openString == true && currentChar!='"'){ //Saving the string that's being printed.
+					stringWriter = stringWriter+currentChar;
+				}
+				if(openString == false){ //Not a string.
+					if(currentChar == ':'){ //Key-Value Divider.
+						name = "";
+						name = name + stringWriter;
+					}
+					//Check for numerics/numbers.
+					if(Character.isDigit(currentChar) || currentChar == '.' || currentChar == 'E' || currentChar == 'e' || currentChar == '+' || currentChar == '-'){
+						//use Number
+						stringWriter = "";
+						stringWriter = stringWriter+currentChar;
+						openString = true;
+						isOtherDataType = true;
+					}
+					//Check for values: booleans and nulls.
+					if(currentChar == 't' || (currentChar == 'f' && json.charAt(a+1)=='a') || currentChar == 'n'){
+						stringWriter = "";
+						stringWriter = stringWriter+currentChar;
+						openString = true;
+						isOtherDataType = true;
+					}
+					//TODO Check for arrays.
+					if(currentChar == '['){
+						
+					}
+					//TODO Check for nested objects.
+					if(currentChar == '{'){ // new HashMap Object
+						String containerlessString = json.substring(0,json.lastIndexOf('}'));
+						int closingContainerBracket = containerlessString.lastIndexOf('}');
+						System.out.println("flag A "+a+ "flag Bracket "+closingContainerBracket);
+						System.out.println("flag B "+json.substring(a,closingContainerBracket+1));
+						Map<String,Object> nestedOutput = new LinkedHashMap<String,Object>();
+						nestedOutput = parse(json.substring(a,closingContainerBracket+1));
+						System.out.println("nestedOutput "+nestedOutput);
+						
+						value = nestedOutput;
+						System.out.println("value "+value);
+						
+						output.put(name, nestedOutput);
+						
+					}
+					//Check for end - new object to add.
+					if(currentChar == ',' || (currentChar=='}')){
+						addNewKeyValue = true;
+					}
+				}
+			}
+			//Skip over the first bracket- it is the JSON Object itself.
+			if(containerBracket == false && currentChar == '{'){
+				containerBracket = true;
+			}
+			if(addNewKeyValue == true){
+				value = stringWriter; //TODO INCORRECT
+				System.out.println("name: "+name+" value: "+value);
+				output.put(name,value);
+				System.out.println("output: "+output);
+				addNewKeyValue = false;
+			}
+			
+			//TODO-Delete this.
 			testString = testString+currentChar;
 		} 
-		System.out.println("Test: "+testString);
 		
-		//Test Map object.
-		output.put("examplekey", "examplevalue");
+		//TODO-Delete this.
+		System.out.println("Inputted String:---"+testString);
+		
+		//TODO-Delete these-Test Map object.
+		//output.put("examplekey", "examplevalue");
 		//output.put("debug", "on");
+		//output.put("window", new LinkedHashMap<String, Object>().put("title","sample"));
+		//output.put("testInnerMap", new LinkedHashMap<String, Object>().put("test1name","test1value"));
+		//System.out.println("testOutputWindow: "+output.get("window"));
+		System.out.println("testoutput: "+output);
+		//assert output.get(Map<String, Object>)
 		
 		return output;
 	}
 	
 	/**
+		nestedHashMap()
+		Handles nested hash maps, allows for recursion.
+	**/
+	//public static LinkedHashMap<String, Object> nestedHashMap(){
+		
+		
+	//}
+	
+	/**
+		main()
 		Main driver with example. Replace exampleString with test strings.
 	**/
 	public static void main(String[] args){
-		String exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
+		
+		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
+		
 		//parse() is static already but to keep in line with the example input:
 		Map<String,Object> output = JSONParser.parse(exampleString);
 		
-		assert output.get("debug").equals("on");/*
-		//XXX weirdly written
-		assert (Map<String, Object>(output.get("window")).get("title")).equals("sample");
-		assert (Map<String, Object>(output.get("window")).get("size")).equals(500);
-		*/
+		assert output.get("debug").equals("on");
+		//assert output.get("window").get("title").equals("sample");
+		//assert output.get("window").get("size");.equals(500);
+		assert ((Map)output.get("window")).get("title").equals("sample");
+		//assert (Map<String, Object>(output.get("window"))).get("size").equals(500);
 	}
 	
 }
