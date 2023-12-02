@@ -34,6 +34,7 @@ public class JSONParser{
 		boolean isNull = false;
 		boolean alreadyInBracket = false;
 		int numNestedBrackets = 0;
+		int indexClosedBrace = -1;
 		String stringWriter = "";
 		String name = "";
 		Object value;
@@ -42,50 +43,49 @@ public class JSONParser{
 		for(int a=0;a<json.length();a++){
 			char currentChar = json.charAt(a);
 			
-			System.out.println("currentChar "+ currentChar);
+			System.out.println("currentChar "+ currentChar+" a "+a+" indexClosedBrace "+indexClosedBrace);
 			
 			if(containerBracket == true){
+				//---------------------------------------------------------------------------------------------------------
+				//1a. Check for Strings. Opens StringWriter.
+				//1c. Closes StringWriter.
 				if(currentChar == '"'){
 					openString = !openString; // Reverse the boolean, a quote begins or ends.
 					if(openString == true){
 						stringWriter = "";//empty the stringWriter.
 					}
 					else if(openString == false){//end of the word
-						//stringWriter = stringWriter+""; //Save the last string written.
-						
-						//TODO Delete this.
-						System.out.println(stringWriter);	
+						System.out.println("Finished String(Name?/Value?): "+stringWriter);	
 					}	
 				}
+				//2c./3c. End Condition for Numbers, Values, Closes StringWriter.
 				if(openString == true && isOtherDataType == true && (currentChar==',' || currentChar=='}')){
 					openString = !openString;
 					isOtherDataType = !isOtherDataType;
 				}
-				if(openString == true && currentChar!='"'){ //Saving the string that's being printed.
+				//1b./2b./3b. Save all characters inside of String, Writes to StringWriter.
+				if(openString == true && currentChar!='"'){
 					stringWriter = stringWriter+currentChar;
 				}
+				//----------------------------------------------------------------------------------------------------------
+				//End Condition for String, 
+				//NonStrings: Check for Numbers, Values, Arrays, Nested Objects.
 				if(openString == false){ //Not a string.
-					if(currentChar == ':'){ //Key-Value Divider.
-						name = "";
-						name = name + stringWriter;
-						stringWriter = "";
-					}
-					//Check for numerics/numbers.
+					//2a. Check for numerics/numbers.
 					if(Character.isDigit(currentChar) || currentChar == '.' || currentChar == 'E' || currentChar == 'e' || currentChar == '+' || currentChar == '-'){
-						//use Number
-						stringWriter = "";
+						stringWriter = ""; //empty the stringWriter
 						stringWriter = stringWriter+currentChar;
-						openString = true;
+						openString = true; //save number as a String.
 						isOtherDataType = true;
 						isNumber = true;
 					}
-					//Check for values: booleans and nulls.
-					if(currentChar == 't' || (currentChar == 'f' && json.charAt(a+1)=='a') || currentChar == 'n'){
-						stringWriter = "";
+					//3a. Check for values: booleans and nulls.
+					if(currentChar == 't' || currentChar == 'T' || (currentChar == 'f' && json.charAt(a+1)=='a') || (currentChar == 'F' && json.charAt(a+1)=='a') || (currentChar == 'F' && json.charAt(a+1)=='A') || currentChar == 'n' || currentChar == 'N'){
+						stringWriter = ""; //empty the stringWriter
 						stringWriter = stringWriter+currentChar;
 						openString = true;
 						isOtherDataType = true;
-						if(currentChar == 'n'){
+						if(currentChar == 'n' || currentChar == 'N'){
 							isNull = true;
 						}
 						else{
@@ -96,11 +96,11 @@ public class JSONParser{
 					if(currentChar == '['){
 						
 					}
-					//Check for nested objects.
+					//4a. Check for nested objects.
 					if(currentChar == '{'){ // new HashMap Object
 						alreadyInBracket = true;
 						int openedBraces = 1;
-						int indexClosedBrace = -1;
+						indexClosedBrace = -1;
 						boolean isString = false;
 						for(int c=a+1;c<json.length();c++){
 							if(indexClosedBrace == -1){ //If haven't found the closing brace yet
@@ -126,33 +126,48 @@ public class JSONParser{
 						
 						System.out.println("flag A "+a+ "flag Bracket "+closingContainerBracket);
 						System.out.println("flag B "+json.substring(a,closingContainerBracket+1));
+						
 						Map<String,Object> nestedOutput = new LinkedHashMap<String,Object>();
 						nestedOutput = parse(json.substring(a,closingContainerBracket+1));
+						
 						System.out.println("nestedOutput "+nestedOutput);
 						
 						value = nestedOutput;
-						System.out.println("value "+value);
 						
-						//TODO Delete this.
-						output.put(name, nestedOutput);
-						
-						System.out.println("+++");
+						output.put(name, value); //TODO Change nestedOutput to value?
+						System.out.println("Inserted- name: "+name+" value: "+value);
 						
 					}
-					//Check for end - new object to add.
-					if(currentChar == ',' || (currentChar=='}')){
+					//1di. String is a Name.
+					if(currentChar == ':'){ //Key-Value Divider.
+						name = "";
+						name = name + stringWriter;
+						System.out.println("Assigned "+stringWriter+" to Name.");
+						stringWriter = ""; //empty the stringWriter.
+					}
+					//1dii. String is a Value.
+					//2d. Number is a Value.
+					//3d. Bool/Null is a Value.
+					//Check for end condition- new object to add.
+				if(currentChar == ',' || (currentChar=='}')){//(a==json.length()-1)){//(currentChar=='}')){
 						addNewKeyValue = true;
+						/*if(json.charAt(a-1)!=',' && json.charAt(a-1)!='}'){
+							addNewKeyValue = true;
+						}*/
 					}
 				}
 			}
-			//Skip over the first bracket- it is the JSON Object itself.
+			//0. Skip over the first bracket- it is the JSON Object itself.
 			if(containerBracket == false && currentChar == '{'){
 				containerBracket = true;
 			}
 			if(addNewKeyValue == true){
+				//1e. String is assigned to Value.
+				//2e. Number String is converted to Number Object, assigned to Value.
+				//3e. Bool/Null String is converted to Bool/Null Object, assigned to Value.
 				if(isNumber == true){
-					//Count Number of Digits Integer/Double vs Long.
-					//TODO Technically should check for Double limits vs Long, but will assume E/e values are reasonably smaller.
+					//Count Number of Digits Integer/Double vs Long, Check Scientific Notation.
+					//Note: Technically should check for Double limits vs Long, but will assume E/e values are reasonably smaller.
 					int digits = 0;
 					boolean beforeE = true;
 					for(int b=0;b<stringWriter.length();b++){
@@ -165,14 +180,16 @@ public class JSONParser{
 							}
 						}
 					}
-					//Is an Integer or Double
-					System.out.println("Check STRINGWRITER "+stringWriter+" "+stringWriter.getClass()+" "+stringWriter.contains("e"));
+					//2ei. Assign to Double, Integer, or Long.
+					//Is an Integer or Double?
 					if((digits<=9)){
 						if(stringWriter.contains(".")){ // Is a Double or Float
-							value = Double.parseDouble(stringWriter);
+							value = Double.parseDouble(stringWriter); //assigned to Value.
+							System.out.println("Assigned Double "+value+" to Value.");
 						}
 						else{ // Is an Integer
-							value = Integer.parseInt(stringWriter);
+							value = Integer.parseInt(stringWriter); //assigned to Value.
+							System.out.println("Assigned Int "+value+" to Value.");
 						}
 					}
 					else{ //Is a Long
@@ -181,31 +198,66 @@ public class JSONParser{
 							toNumber = DecimalFormat.getInstance().parse(stringWriter);
 							}
 						catch(Exception e){}
-						value = toNumber;
+						value = toNumber; //assigned to Value.
+						System.out.println("Assigned Long "+value+" to Value.");
 					}
-					
-					System.out.println("Check VALUE "+value.getClass());
-					
-					isNumber = false;
+					isNumber = false; //finished assigning Number.
 				}
 				else if(isBoolean == true){
 					boolean toBoolean = Boolean.valueOf(stringWriter);
-					value = toBoolean;
-					isBoolean = false;
+					value = toBoolean; //assigned to Value.
+					System.out.println("Assigned Bool "+value+" to Value.");
+					isBoolean = false; //finished assigning Bool.
 				}
 				else if(isNull == true){
-					value = null;
-					isNull = false;
+					value = null; //assigned to Value.
+					System.out.println("Assigned Null "+value+" to Value.");
+					isNull = false; //finished assigning Null.
 				}
 				else{ //String
-					System.out.println("AddNewKeyValue Else "+stringWriter);
-					value = stringWriter;
+					System.out.println("Assigned String "+stringWriter+" to Value.");
+					value = stringWriter; //assigned to Value.
 				}
 				
-				System.out.println("name: "+name+" value: "+value);
-				output.put(name,value);
-				System.out.println("output: "+output);
-				addNewKeyValue = false;
+				//check this TODO
+				if(alreadyInBracket == true){
+					System.out.println("indexClosedBrace "+indexClosedBrace+" JSONLength "+json.length());
+					String restOfString = json.substring(indexClosedBrace,json.length());
+					System.out.println("RESTOFSTRING "+restOfString);
+					int distToNext = -1;
+					boolean foundDistToNext = false;
+					for(int e=indexClosedBrace;e<json.length();e++){
+						System.out.println("e"+e);
+						if(foundDistToNext==false){
+							if(json.charAt(e)!='}' && json.charAt(e)!=',' && json.charAt(e)!=' '){
+								distToNext = e;
+								System.out.println("distToNext"+distToNext+" jsoncharAt "+json.charAt(e));
+								foundDistToNext = true;
+							}
+						}
+					}
+					if(distToNext == -1){
+						distToNext = restOfString.length()+indexClosedBrace+1;
+					}
+					System.out.println("distToNext "+distToNext);
+					
+					System.out.println("Check- name "+name+" value "+value+" stringWriter "+stringWriter+" a "+a+" indexClosedBrace "+indexClosedBrace);
+					if(a>distToNext){	//indexClosedBrace+1				
+						System.out.println("Inserted- name "+name+" value "+value+" stringWriter "+stringWriter+" a "+a+" indexClosedBrace "+indexClosedBrace);
+						addNewKeyValue = true;
+						alreadyInBracket = false;
+						output.put(name,value); //insert Name, Value to Hashmap.
+					}
+				}
+				else{
+					
+					System.out.println("Inserted- name: "+name+" value: "+value);
+					output.put(name,value); //insert Name, Value to Hashmap.
+					System.out.println("output: "+output);
+					addNewKeyValue = false;
+				
+				}
+				addNewKeyValue = false; //finished assigning, inserting into Hashmap.
 			}
 			
 			//TODO-Delete this.
@@ -214,17 +266,7 @@ public class JSONParser{
 		
 		//TODO-Delete this.
 		System.out.println("Inputted String:---"+testString);
-		
-		//TODO-Delete these-Test Map object.
-		//output.put("examplekey", "examplevalue");
-		//output.put("debug", "on");
-		//output.put("window", new LinkedHashMap<String, Object>().put("title","sample"));
-		//output.put("testInnerMap", new LinkedHashMap<String, Object>().put("test1name","test1value"));
-		//System.out.println("testOutputWindow: "+output.get("window"));
-		//output.put("testArray", [3,4,5]);
-		
-		System.out.println("testoutput: "+output);
-		//assert output.get(Map<String, Object>)
+		System.out.println("Hashmap: "+output);
 		
 		return output;
 	}
@@ -235,24 +277,13 @@ public class JSONParser{
 	**/
 	public static void main(String[] args) throws Exception{
 		
-		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{}, \"test3\": \"kk{-> pe \"}}";
+		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{\"test2a\":{\"test2aa\":\"test2aaresult\"}}, \"test3\": \"(kk}-> pe \"}}";
 		//exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
 
 		//parse() is static already but to keep in line with the example input:
-		//try{
 		Map<String,Object> output = JSONParser.parse(exampleString);
-		/*}
-		catch(Exception e){
-			//Will ignore for now.
-		}*/
 		
 		assert output.get("debug").equals("on");
-		
-		//assert output.get("size").equals(500);
-		
-		System.out.println("testAssert "+(output.get("size")).getClass());
-		System.out.println(((Map<String, Object>)output.get("window")).get("size"));
-		
 		assert ((Map<String, Object>)output.get("window")).get("title").equals("sample");
 		assert ((Map<String, Object>)output.get("window")).get("size").equals(500);
 	}
