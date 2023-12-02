@@ -32,6 +32,7 @@ public class JSONParser{
 		boolean isNumber = false;
 		boolean isBoolean = false;
 		boolean isNull = false;
+		boolean alreadyInBracket = false;
 		int numNestedBrackets = 0;
 		String stringWriter = "";
 		String name = "";
@@ -94,10 +95,26 @@ public class JSONParser{
 					if(currentChar == '['){
 						
 					}
-					//TODO Check for nested objects.
+					//Check for nested objects.
 					if(currentChar == '{'){ // new HashMap Object
-						String containerlessString = json.substring(0,json.lastIndexOf('}'));
-						int closingContainerBracket = containerlessString.lastIndexOf('}');
+						alreadyInBracket = true;
+						int openedBraces = 1;
+						int indexClosedBrace = -1;
+						for(int c=a+1;c<json.length();c++){
+							if(json.charAt(c) =='{' && indexClosedBrace == -1){
+								openedBraces++;
+							}
+							else if(json.charAt(c)=='}' && indexClosedBrace == -1){
+								openedBraces = openedBraces-1;
+							}
+							if(openedBraces==0 && indexClosedBrace == -1){
+								indexClosedBrace = c;
+							}
+						}
+						//String containerlessString = json.substring(0,indexClosedBrace);
+						//int closingContainerBracket = containerlessString.lastIndexOf('}');
+						int closingContainerBracket = indexClosedBrace;
+						
 						System.out.println("flag A "+a+ "flag Bracket "+closingContainerBracket);
 						System.out.println("flag B "+json.substring(a,closingContainerBracket+1));
 						Map<String,Object> nestedOutput = new LinkedHashMap<String,Object>();
@@ -141,7 +158,7 @@ public class JSONParser{
 					}
 					//Is an Integer or Double
 					System.out.println("Check STRINGWRITER "+stringWriter+" "+stringWriter.getClass()+" "+stringWriter.contains("e"));
-					if((digits<=)){
+					if((digits<=9)){
 						if(stringWriter.contains(".")){ // Is a Double or Float
 							value = Double.parseDouble(stringWriter);
 						}
@@ -208,7 +225,7 @@ public class JSONParser{
 	**/
 	public static void main(String[] args) throws Exception{
 		
-		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
+		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\"}}";
 		//exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
 
 		//parse() is static already but to keep in line with the example input:
