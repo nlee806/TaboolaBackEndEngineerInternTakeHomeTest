@@ -7,6 +7,8 @@ Assumption: Input JSON String is in valid JSON Format.
 **/
 import java.util.*;
 import java.lang.Number;
+import java.text.NumberFormat;
+import java.text.DecimalFormat;
 
 
 public class JSONParser{
@@ -15,7 +17,7 @@ public class JSONParser{
 		parse()
 		Parses json String and returns Map<String,Object>
 	**/
-	public static Map<String,Object> parse(String json){
+	public static Map<String,Object> parse(String json) throws Exception{
 		Map<String,Object> output = new LinkedHashMap<String,Object>();
 		
 		System.out.println("NEW JSON");
@@ -27,6 +29,9 @@ public class JSONParser{
 		boolean openString = false; //In the middle of a String Yes/No
 		boolean addNewKeyValue = false;
 		boolean isOtherDataType = false;
+		boolean isNumber = false;
+		boolean isBoolean = false;
+		boolean isNull = false;
 		int numNestedBrackets = 0;
 		String stringWriter = "";
 		String name = "";
@@ -70,6 +75,7 @@ public class JSONParser{
 						stringWriter = stringWriter+currentChar;
 						openString = true;
 						isOtherDataType = true;
+						isNumber = true;
 					}
 					//Check for values: booleans and nulls.
 					if(currentChar == 't' || (currentChar == 'f' && json.charAt(a+1)=='a') || currentChar == 'n'){
@@ -77,6 +83,12 @@ public class JSONParser{
 						stringWriter = stringWriter+currentChar;
 						openString = true;
 						isOtherDataType = true;
+						if(currentChar == 'n'){
+							isNull = true;
+						}
+						else{
+							isBoolean = true;
+						}
 					}
 					//TODO Check for arrays.
 					if(currentChar == '['){
@@ -95,7 +107,10 @@ public class JSONParser{
 						value = nestedOutput;
 						System.out.println("value "+value);
 						
+						//TODO Delete this.
 						output.put(name, nestedOutput);
+						
+						System.out.println("+++");
 						
 					}
 					//Check for end - new object to add.
@@ -109,7 +124,45 @@ public class JSONParser{
 				containerBracket = true;
 			}
 			if(addNewKeyValue == true){
-				value = stringWriter; //TODO INCORRECT
+				if(isNumber == true){
+					//Is an Integer or Double
+					System.out.println("Check STRINGWRITER "+stringWriter+" "+stringWriter.getClass()+" "+stringWriter.contains("e"));
+					if((stringWriter.length()<=12)){//&&(stringWriter.contains("E")==false)&&(stringWriter.contains("e")==false)){
+						System.out.println("ISNUMBER INTDOUBLE");
+						if(stringWriter.contains(".")){ // Is a Double or Float
+							value = Double.parseDouble(stringWriter);
+						}
+						else{ // Is an Integer
+							value = Integer.parseInt(stringWriter);
+						}
+					}
+					else{ //Is a Long
+						System.out.println("ISNUMBER LONG");
+						Number toNumber = null;
+						try{
+							toNumber = DecimalFormat.getInstance().parse(stringWriter);
+							}
+						catch(Exception e){}
+						value = toNumber;
+					}
+					
+					System.out.println("Check VALUE "+value.getClass());
+					
+					isNumber = false;
+				}
+				else if(isBoolean == true){
+					boolean toBoolean = Boolean.valueOf(stringWriter);
+					value = toBoolean;
+					isBoolean = false;
+				}
+				else if(isNull == true){
+					value = null;
+					isNull = false;
+				}
+				else{
+					value = stringWriter;
+				}
+				
 				System.out.println("name: "+name+" value: "+value);
 				output.put(name,value);
 				System.out.println("output: "+output);
@@ -129,6 +182,8 @@ public class JSONParser{
 		//output.put("window", new LinkedHashMap<String, Object>().put("title","sample"));
 		//output.put("testInnerMap", new LinkedHashMap<String, Object>().put("test1name","test1value"));
 		//System.out.println("testOutputWindow: "+output.get("window"));
+		//output.put("testArray", [3,4,5]);
+		
 		System.out.println("testoutput: "+output);
 		//assert output.get(Map<String, Object>)
 		
@@ -136,30 +191,31 @@ public class JSONParser{
 	}
 	
 	/**
-		nestedHashMap()
-		Handles nested hash maps, allows for recursion.
-	**/
-	//public static LinkedHashMap<String, Object> nestedHashMap(){
-		
-		
-	//}
-	
-	/**
 		main()
 		Main driver with example. Replace exampleString with test strings.
 	**/
-	public static void main(String[] args){
+	public static void main(String[] args) throws Exception{
 		
 		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
-		
+		//exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
+
 		//parse() is static already but to keep in line with the example input:
+		//try{
 		Map<String,Object> output = JSONParser.parse(exampleString);
+		/*}
+		catch(Exception e){
+			//Will ignore for now.
+		}*/
 		
 		assert output.get("debug").equals("on");
-		//assert output.get("window").get("title").equals("sample");
-		//assert output.get("window").get("size");.equals(500);
-		assert ((Map)output.get("window")).get("title").equals("sample");
-		//assert (Map<String, Object>(output.get("window"))).get("size").equals(500);
+		
+		//assert output.get("size").equals(500);
+		
+		System.out.println("testAssert "+(output.get("size")).getClass());
+		System.out.println(((Map<String, Object>)output.get("window")).get("size"));
+		
+		assert ((Map<String, Object>)output.get("window")).get("title").equals("sample");
+		assert ((Map<String, Object>)output.get("window")).get("size").equals(500);
 	}
 	
 }
