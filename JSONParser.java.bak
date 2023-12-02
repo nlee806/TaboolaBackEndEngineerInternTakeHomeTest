@@ -20,9 +20,6 @@ public class JSONParser{
 	public static Map<String,Object> parse(String json) throws Exception{
 		Map<String,Object> output = new LinkedHashMap<String,Object>();
 		
-		System.out.println("NEW JSON");
-		
-		//TODO-Delete this.
 		String testString = "";
 		
 		boolean containerBracket = false;
@@ -32,8 +29,7 @@ public class JSONParser{
 		boolean isNumber = false;
 		boolean isBoolean = false;
 		boolean isNull = false;
-		boolean alreadyInBracket = false;
-		int numNestedBrackets = 0;
+		boolean alreadyInBraces = false;
 		int indexClosedBrace = -1;
 		String stringWriter = "";
 		String name = "";
@@ -42,8 +38,6 @@ public class JSONParser{
 		//Go character by character through the JSON String
 		for(int a=0;a<json.length();a++){
 			char currentChar = json.charAt(a);
-			
-			System.out.println("currentChar "+ currentChar+" a "+a+" indexClosedBrace "+indexClosedBrace);
 			
 			if(containerBracket == true && (a>indexClosedBrace)){
 				//---------------------------------------------------------------------------------------------------------
@@ -94,12 +88,74 @@ public class JSONParser{
 					}
 					//TODO 5a. Check for arrays.
 					if(currentChar == '['){
+						alreadyInBraces = true;
+						int leftBrackets = 1;
+						indexClosedBrace = -1;
+						int commas = 0;
+						boolean isString = false;
+						int isObject = 0;
+						String currItem = "";
+						List<Object> lo = new ArrayList<>();
+						for(int c=a+1;c<json.length();c++){
+							if(indexClosedBrace == -1){ //If haven't found the closing bracket yet
+								currItem = currItem+json.charAt(c);
+								System.out.println("currItem"+currItem);
+								if(json.charAt(c)=='"'){ //Ensure that brackets are not in a String.
+									isString = !isString;
+								}
+								if(json.charAt(c)=='{'){ //Ensure that brackets are not in an Object.
+									isObject++;
+								}
+								if(json.charAt(c)=='}'){
+									isObject--;
+								}
+								if(isString == false && isObject==0){ //If not part of a String or Object
+									if(json.charAt(c) =='['){
+										leftBrackets++;
+									}
+									else if(json.charAt(c)==']'){
+										leftBrackets--;
+									}
+									if(leftBrackets==0){
+										indexClosedBrace = c;
+										currItem = currItem.substring(0, currItem.length()-1); //take off containing bracket.
+										lo.add(currItem);
+									}
+									if(json.charAt(c)==','){
+										commas++;
+										currItem = currItem.substring(0, currItem.length()-1); //take off comma.
+										lo.add(currItem);
+										currItem = ""; //new string.
+									}
+								}
+							}
+						}
 						
+						Map<String,Object> newArray = new LinkedHashMap<String,Object>();
+						Object[] objArr = new Object[commas+1];
 						
+						for(int f=0;f<lo.size();f++){
+							String str = "{\"objectNameFiller\":"+lo.get(f)+"}";
+							System.out.println("Object "+f+" : "+lo.get(f)+" "+str);
+						
+							Map<String,Object> arrayOutput = new LinkedHashMap<String,Object>();
+							arrayOutput = parse(str);
+							objArr[f] = arrayOutput.get("objectNameFiller");
+							System.out.println("objarrf "+objArr[f]);
+							newArray.put(String.valueOf(f),objArr[f]);
+						}
+						
+						//value = objArr;
+						value = Arrays.toString(objArr);
+						stringWriter = Arrays.toString(objArr);
+						output.put(name, value);
+						//output.put(name, newArray);
+						
+						System.out.println("Inserted Array- name: "+name+" value: "+value);
 					}
 					//4a. Check for nested objects.
 					if(currentChar == '{'){ // new HashMap Object
-						alreadyInBracket = true;
+						alreadyInBraces = true;
 						int openedBraces = 1;
 						indexClosedBrace = -1;
 						boolean isString = false;
@@ -113,7 +169,7 @@ public class JSONParser{
 										openedBraces++;
 									}
 									else if(json.charAt(c)=='}'){
-										openedBraces = openedBraces-1;
+										openedBraces--;
 									}
 									if(openedBraces==0){
 										indexClosedBrace = c;
@@ -122,8 +178,8 @@ public class JSONParser{
 							}
 						}
 						
-						System.out.println("flag A "+a+ "flag Bracket "+indexClosedBrace);
-						System.out.println("flag B "+json.substring(a,indexClosedBrace+1));
+						System.out.println("start of object: "+a+ " end of object: "+indexClosedBrace);
+						System.out.println("selected substring: "+json.substring(a,indexClosedBrace+1));
 						
 						Map<String,Object> nestedOutput = new LinkedHashMap<String,Object>();
 						nestedOutput = parse(json.substring(a,indexClosedBrace+1));
@@ -131,9 +187,9 @@ public class JSONParser{
 						System.out.println("nestedOutput "+nestedOutput);
 						
 						value = nestedOutput;
-						output.put(name, value); //TODO Change nestedOutput to value?
+						output.put(name, value);
 						
-						System.out.println("Inserted- name: "+name+" value: "+value);
+						System.out.println("Inserted Object- name: "+name+" value: "+value);
 						
 					}
 					//1di. String is a Name.
@@ -216,7 +272,7 @@ public class JSONParser{
 				}
 				
 				//check this TODO
-				if(alreadyInBracket == true){
+				if(alreadyInBraces == true){
 					System.out.println("indexClosedBrace "+indexClosedBrace+" JSONLength "+json.length());
 					String restOfString = json.substring(indexClosedBrace,json.length());
 					System.out.println("RestOfString "+restOfString);
@@ -240,7 +296,7 @@ public class JSONParser{
 					if(a>distToNext){	//indexClosedBrace+1				
 						System.out.println("Inserted- name "+name+" value "+value+" stringWriter "+stringWriter+" a "+a+" indexClosedBrace "+indexClosedBrace);
 						addNewKeyValue = true;
-						alreadyInBracket = false;
+						alreadyInBraces = false;
 						output.put(name,value); //insert Name, Value to Hashmap.
 					}
 				}
@@ -255,11 +311,11 @@ public class JSONParser{
 				addNewKeyValue = false; //finished assigning, inserting into Hashmap.
 			}
 			
-			//TODO-Delete this.
+			//TODO For testing purposes.
 			testString = testString+currentChar;
 		} 
 		
-		//TODO-Delete this.
+		//TODO For testing purposes.
 		System.out.println("Inputted String:---"+testString);
 		System.out.println("Hashmap: "+output);
 		
@@ -272,7 +328,7 @@ public class JSONParser{
 	**/
 	public static void main(String[] args) throws Exception{
 		
-		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{\"test2a\":{}}, \"test3\": \"(kk}-> pe \"}, \"test4\":5 }";
+		String exampleString = "{\"testNum\": -59832.45e10, \"testarray\":[3,4.8,\"g,h\",{\"testarray1\":3.5},true, 6], \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{\"test2a\":{}}, \"test3\": \"(kk}-> pe \"}, \"test4\":5 }";
 		//exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
 
 		//parse() is static already but to keep in line with the example input:
