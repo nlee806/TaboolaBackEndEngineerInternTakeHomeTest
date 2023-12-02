@@ -45,7 +45,7 @@ public class JSONParser{
 			
 			System.out.println("currentChar "+ currentChar+" a "+a+" indexClosedBrace "+indexClosedBrace);
 			
-			if(containerBracket == true){
+			if(containerBracket == true && (a>indexClosedBrace)){
 				//---------------------------------------------------------------------------------------------------------
 				//1a. Check for Strings. Opens StringWriter.
 				//1c. Closes StringWriter.
@@ -92,8 +92,9 @@ public class JSONParser{
 							isBoolean = true;
 						}
 					}
-					//TODO Check for arrays.
+					//TODO 5a. Check for arrays.
 					if(currentChar == '['){
+						
 						
 					}
 					//4a. Check for nested objects.
@@ -120,21 +121,18 @@ public class JSONParser{
 								}
 							}
 						}
-						//String containerlessString = json.substring(0,indexClosedBrace);
-						//int closingContainerBracket = containerlessString.lastIndexOf('}');
-						int closingContainerBracket = indexClosedBrace;
 						
-						System.out.println("flag A "+a+ "flag Bracket "+closingContainerBracket);
-						System.out.println("flag B "+json.substring(a,closingContainerBracket+1));
+						System.out.println("flag A "+a+ "flag Bracket "+indexClosedBrace);
+						System.out.println("flag B "+json.substring(a,indexClosedBrace+1));
 						
 						Map<String,Object> nestedOutput = new LinkedHashMap<String,Object>();
-						nestedOutput = parse(json.substring(a,closingContainerBracket+1));
+						nestedOutput = parse(json.substring(a,indexClosedBrace+1));
 						
 						System.out.println("nestedOutput "+nestedOutput);
 						
 						value = nestedOutput;
-						
 						output.put(name, value); //TODO Change nestedOutput to value?
+						
 						System.out.println("Inserted- name: "+name+" value: "+value);
 						
 					}
@@ -149,11 +147,8 @@ public class JSONParser{
 					//2d. Number is a Value.
 					//3d. Bool/Null is a Value.
 					//Check for end condition- new object to add.
-				if(currentChar == ',' || (currentChar=='}')){//(a==json.length()-1)){//(currentChar=='}')){
+				if(currentChar == ',' || (currentChar=='}')){
 						addNewKeyValue = true;
-						/*if(json.charAt(a-1)!=',' && json.charAt(a-1)!='}'){
-							addNewKeyValue = true;
-						}*/
 					}
 				}
 			}
@@ -182,6 +177,7 @@ public class JSONParser{
 					}
 					//2ei. Assign to Double, Integer, or Long.
 					//Is an Integer or Double?
+					stringWriter = stringWriter.replaceAll("\\s","");
 					if((digits<=9)){
 						if(stringWriter.contains(".")){ // Is a Double or Float
 							value = Double.parseDouble(stringWriter); //assigned to Value.
@@ -223,11 +219,10 @@ public class JSONParser{
 				if(alreadyInBracket == true){
 					System.out.println("indexClosedBrace "+indexClosedBrace+" JSONLength "+json.length());
 					String restOfString = json.substring(indexClosedBrace,json.length());
-					System.out.println("RESTOFSTRING "+restOfString);
+					System.out.println("RestOfString "+restOfString);
 					int distToNext = -1;
 					boolean foundDistToNext = false;
 					for(int e=indexClosedBrace;e<json.length();e++){
-						System.out.println("e"+e);
 						if(foundDistToNext==false){
 							if(json.charAt(e)!='}' && json.charAt(e)!=',' && json.charAt(e)!=' '){
 								distToNext = e;
@@ -277,7 +272,7 @@ public class JSONParser{
 	**/
 	public static void main(String[] args) throws Exception{
 		
-		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{\"test2a\":{\"test2aa\":\"test2aaresult\"}}, \"test3\": \"(kk}-> pe \"}}";
+		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{\"test2a\":{}}, \"test3\": \"(kk}-> pe \"}, \"test4\":5 }";
 		//exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
 
 		//parse() is static already but to keep in line with the example input:
