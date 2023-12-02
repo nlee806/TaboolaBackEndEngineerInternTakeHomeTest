@@ -86,7 +86,7 @@ public class JSONParser{
 							isBoolean = true;
 						}
 					}
-					//TODO 5a. Check for arrays.
+					//5a. Check for arrays.
 					if(currentChar == '['){
 						alreadyInBraces = true;
 						int leftBrackets = 1;
@@ -146,8 +146,8 @@ public class JSONParser{
 						}
 						
 						//value = objArr;
-						value = Arrays.toString(objArr);
 						stringWriter = Arrays.toString(objArr);
+						value = stringWriter;
 						output.put(name, value);
 						//output.put(name, newArray);
 						

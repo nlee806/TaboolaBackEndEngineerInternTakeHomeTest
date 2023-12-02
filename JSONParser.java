@@ -146,8 +146,8 @@ public class JSONParser{
 						}
 						
 						//value = objArr;
-						value = Arrays.toString(objArr);
 						stringWriter = Arrays.toString(objArr);
+						value = stringWriter;
 						output.put(name, value);
 						//output.put(name, newArray);
 						
@@ -328,7 +328,7 @@ public class JSONParser{
 	**/
 	public static void main(String[] args) throws Exception{
 		
-		String exampleString = "{\"testNum\": -59832.45e10, \"testarray\":[3,4.8,\"g,h\",{\"testarray1\":3.5},true, 6], \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{\"test2a\":{}}, \"test3\": \"(kk}-> pe \"}, \"test4\":5 }";
+		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{\"test2a\":{}}, \"test3\": \"(kk}-> pe \"}, \"test4\":5 }";
 		//exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
 
 		//parse() is static already but to keep in line with the example input:
