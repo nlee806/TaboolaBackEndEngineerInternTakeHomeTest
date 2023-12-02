@@ -68,6 +68,7 @@ public class JSONParser{
 					if(currentChar == ':'){ //Key-Value Divider.
 						name = "";
 						name = name + stringWriter;
+						stringWriter = "";
 					}
 					//Check for numerics/numbers.
 					if(Character.isDigit(currentChar) || currentChar == '.' || currentChar == 'E' || currentChar == 'e' || currentChar == '+' || currentChar == '-'){
@@ -100,15 +101,23 @@ public class JSONParser{
 						alreadyInBracket = true;
 						int openedBraces = 1;
 						int indexClosedBrace = -1;
+						boolean isString = false;
 						for(int c=a+1;c<json.length();c++){
-							if(json.charAt(c) =='{' && indexClosedBrace == -1){
-								openedBraces++;
-							}
-							else if(json.charAt(c)=='}' && indexClosedBrace == -1){
-								openedBraces = openedBraces-1;
-							}
-							if(openedBraces==0 && indexClosedBrace == -1){
-								indexClosedBrace = c;
+							if(indexClosedBrace == -1){ //If haven't found the closing brace yet
+								if(json.charAt(c)=='"'){ //Ensure that brackets are not in a String.
+									isString = !isString;
+								}
+								if(isString == false){ //If not part of a String
+									if(json.charAt(c) =='{'){
+										openedBraces++;
+									}
+									else if(json.charAt(c)=='}'){
+										openedBraces = openedBraces-1;
+									}
+									if(openedBraces==0){
+										indexClosedBrace = c;
+									}
+								}
 							}
 						}
 						//String containerlessString = json.substring(0,indexClosedBrace);
@@ -118,7 +127,7 @@ public class JSONParser{
 						System.out.println("flag A "+a+ "flag Bracket "+closingContainerBracket);
 						System.out.println("flag B "+json.substring(a,closingContainerBracket+1));
 						Map<String,Object> nestedOutput = new LinkedHashMap<String,Object>();
-						nestedOutput = parse(json.substring(a,closingContainerBracket));
+						nestedOutput = parse(json.substring(a,closingContainerBracket+1));
 						System.out.println("nestedOutput "+nestedOutput);
 						
 						value = nestedOutput;
@@ -188,7 +197,8 @@ public class JSONParser{
 					value = null;
 					isNull = false;
 				}
-				else{
+				else{ //String
+					System.out.println("AddNewKeyValue Else "+stringWriter);
 					value = stringWriter;
 				}
 				
@@ -225,7 +235,7 @@ public class JSONParser{
 	**/
 	public static void main(String[] args) throws Exception{
 		
-		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\"}}";
+		String exampleString = "{\"testNum\": -59832.45e10, \"testbool\": false, \"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}, \"testnull\":null, \"testBraces\":{\"test1\":\"test1value\", \"test2\":{}, \"test3\": \"kk{-> pe \"}}";
 		//exampleString = "{\"debug\" : \"on\",\"window\" : {\"title\" : \"sample\",\"size\": 500}}";
 
 		//parse() is static already but to keep in line with the example input:
