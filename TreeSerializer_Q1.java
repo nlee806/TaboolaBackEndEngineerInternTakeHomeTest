@@ -98,6 +98,8 @@ public class TreeSerializer_Q1{
 		this.root = a;
 		
 		
+		System.out.println(c.left);
+		
 		BinaryTreeSerializer bts = new BinaryTreeSerializer();
 		bts.root = root;
 	
@@ -106,7 +108,8 @@ public class TreeSerializer_Q1{
 		System.out.println("serialized: "+str);
 		//Deserialize
 		Node newRoot = bts.deserialize(str);
-		System.out.println("deserialized: "+preOrderTraversal(newRoot));
+		System.out.println("deserialized: ");
+		preOrderTraversal(newRoot);
 		
 		//TODO
 		//tree = implementation.deserialize(implementation.serialize(tree))
