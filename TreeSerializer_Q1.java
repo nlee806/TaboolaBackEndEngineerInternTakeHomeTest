@@ -6,6 +6,9 @@
 
 **/
 
+import java.lang.Math;
+import java.util.Arrays;
+
 public class TreeSerializer_Q1{
 	
 	Node root;
@@ -35,11 +38,13 @@ public class TreeSerializer_Q1{
 	public static class BinaryTreeSerializer implements TreeSerializer{
 		Node root;
 		
+		@Override
 		public String serialize(Node root){
-			
-			return "";
+			String strSerialize = "";
+			return levelOrderTraversal(root, strSerialize);
 		}
 		
+		@Override
 		public Node deserialize(String str){
 			
 			
@@ -49,18 +54,73 @@ public class TreeSerializer_Q1{
 	}
 	
 	/**
-		preOrderTraversal()
-		Performs preorder traversal on the binary tree beginning with given root node.
+		levelOrderTraversal()
+		Performs levelorder traversal on the binary tree beginning with given root node.
+		Modified to write to array implementation of binary tree.
 	**/
-	public static void preOrderTraversal(Node root){
+	public static String levelOrderTraversal(Node root, String strSerialize){
+		
+		//Array Size = 2^treeHeight + 1 .
+		int heightRoot = height(root);
+		Object[] treeArray = new Object[((int)Math.pow(2,heightRoot)+1)];
+		Arrays.fill(treeArray, null);
+		
+		//If node is root, index = 0.
+		//If left child of a parent, childIndex = 2*parentIndex+1
+		//If right child of a parent, childIndex = 2*parentIndex+2
+		for(int l=0;l<=heightRoot;l++){
+			getCurrentLevel(root,l,0,treeArray);
+		}
+		
+		for(int i=0;i<treeArray.length;i++){
+			if(treeArray.length>1 && i>0){
+				if(treeArray[i]!=null){
+					strSerialize = strSerialize+","+treeArray[i];
+				}
+				else{
+					strSerialize = strSerialize+",";
+				}
+			}
+		}
+		System.out.println("strSerialize: "+strSerialize);
+		return strSerialize;
+	}
+	/**
+		getCurrentLevel()
+		get all nodes of the current level of the tree.
+		Modified to add to treeArray based on parentIndex.
+	**/
+	public static void getCurrentLevel(Node root, int level, int rootIndex, Object[] treeArray){
 		if(root==null){
 			return;
 		}
-		System.out.println(" "+root.num+" "); //visit node
-		preOrderTraversal(root.left);
-		preOrderTraversal(root.right);
+		if(level==1){
+			treeArray[rootIndex]=root.num;
+		}
+		else if(level>1){
+			getCurrentLevel(root.left, level-1,2*rootIndex+1, treeArray);
+			getCurrentLevel(root.right, level-1,2*rootIndex+2, treeArray);
+		}
 	}
-	
+	/**
+		height()
+		Return the height of the tree.
+	**/
+	public static int height(Node root){
+		if(root==null){
+			return 0;
+		}
+		else{
+			int leftHeight = height(root.left);
+			int rightHeight = height(root.right);
+			if(leftHeight>rightHeight){
+				return leftHeight+1;
+			}
+			else{
+				return rightHeight+1;
+			}
+		}
+	}
 	/**
 		launchTreeSerializer()
 		Initializes a new binary tree of integers, calls serialize(), then deserialize().
@@ -97,9 +157,6 @@ public class TreeSerializer_Q1{
 		
 		this.root = a;
 		
-		
-		System.out.println(c.left);
-		
 		BinaryTreeSerializer bts = new BinaryTreeSerializer();
 		bts.root = root;
 	
@@ -109,7 +166,7 @@ public class TreeSerializer_Q1{
 		//Deserialize
 		Node newRoot = bts.deserialize(str);
 		System.out.println("deserialized: ");
-		preOrderTraversal(newRoot);
+		levelOrderTraversal(newRoot,"");
 		
 		//TODO
 		//tree = implementation.deserialize(implementation.serialize(tree))
@@ -122,7 +179,7 @@ public class TreeSerializer_Q1{
 	**/
 	public static void main(String[] args){
 		
-		//TODO Handle incorrect output, with exceptions.
+		//TODO Handle incorrect output errors, with exceptions.
 		
 		
 		TreeSerializer_Q1 tq1 = new TreeSerializer_Q1();
