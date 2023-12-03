@@ -2,7 +2,7 @@
 
 @author: Nathan Lee
 @purpose: Taboola Backend Engineer Intern Take Home Test Question 2 Part 1.
-
+Sorry! Ran out of time.
 
 **/
 

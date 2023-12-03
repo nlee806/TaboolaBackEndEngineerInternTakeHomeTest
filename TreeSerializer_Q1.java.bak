@@ -210,7 +210,7 @@ public class TreeSerializer_Q1{
 		Node myroot;
 		//setChildren sc = new setChildren();
 		for(int l=0;l<=heightRoot;l++){
-			root = setChildren(root,l,0,nodes);
+			//root = setChildren(root,l,0,nodes); //TODO
 		}
 		
 		
